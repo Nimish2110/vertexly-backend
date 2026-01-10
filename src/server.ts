@@ -11,7 +11,7 @@ import adminOrderRoutes from "./routes/adminOrderRoutes.js";
 import adminTemplateRoutes from "./routes/adminTemplateRoutes.js";
 import adminUserRoutes from "./routes/adminUserRoutes.js";
 import adminDeliveryRoutes from "./routes/adminDeliveryRoutes.js";
-
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 connectDB(); 
@@ -35,7 +35,7 @@ app.use("/api/admin/templates", adminTemplateRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin", adminDeliveryRoutes);
 app.use("/uploads", express.static("uploads"));
-
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Vertexly Backend is running 🚀" });
