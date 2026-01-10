@@ -4,15 +4,18 @@ export interface IOrder extends Document {
   user: mongoose.Types.ObjectId;
   template: mongoose.Types.ObjectId;
   templateName: string;
+
   price: number;
   customizationPrice: number;
   discount: number;
   total: number;
+
   status: string;
+
   requirements: string;
   requirementsSubmitted: boolean;
 
-  // ⭐ NEW FIELDS
+  // 🔹 DELIVERY FIELDS
   deliveryFile: string | null;
   isDelivered: boolean;
   deliveredAt?: Date;
@@ -20,6 +23,11 @@ export interface IOrder extends Document {
   completionMessage: string;
   rejectionReason?: string;
 
+  // 💳 PAYMENT FIELDS (NEW)
+  paymentStatus: "unpaid" | "paid";
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
 }
 
 const OrderSchema = new Schema<IOrder>(
@@ -32,9 +40,10 @@ const OrderSchema = new Schema<IOrder>(
     price: { type: Number, required: true },
     customizationPrice: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
+    total: { type: Number, required: true },
+
     requirements: { type: String, default: "" },
     requirementsSubmitted: { type: Boolean, default: false },
-    total: { type: Number, required: true },
 
     status: {
       type: String,
@@ -45,18 +54,30 @@ const OrderSchema = new Schema<IOrder>(
         "rejected",
         "in_progress",
         "completed",
-        "cancelled"
+        "cancelled",
       ],
-      default: "pending"
+      default: "pending",
     },
+
     rejectionReason: { type: String, default: "" },
 
-    // ⭐ NEW FIELDS IN SCHEMA
+    // 📦 DELIVERY
     deliveryFile: { type: String, default: null },
     isDelivered: { type: Boolean, default: false },
     deliveredAt: { type: Date },
     completionMessage: { type: String, default: "" },
-    deliverySubmitted: { type: Boolean, default: false }
+    deliverySubmitted: { type: Boolean, default: false },
+
+    // 💳 PAYMENT
+    paymentStatus: {
+      type: String,
+      enum: ["unpaid", "paid"],
+      default: "unpaid",
+    },
+
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
   },
   { timestamps: true }
 );
