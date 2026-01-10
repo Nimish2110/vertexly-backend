@@ -4,8 +4,8 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  key_id: process.env.rzp_test_S2Een4QmHFoNah,
+  key_secret: process.env.eQfYymYgJWC7ZkytvuAdaku2,
 });
 
 export const createPaymentOrder = async (req: Request, res: Response) => {
@@ -34,7 +34,7 @@ export const createPaymentOrder = async (req: Request, res: Response) => {
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      key: process.env.RAZORPAY_KEY_ID,
+      key: process.env.rzp_test_S2Een4QmHFoNah,
     });
 
   } catch (error) {
@@ -55,7 +55,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
     const body = razorpayOrderId + "|" + razorpayPaymentId;
 
     const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
+      .createHmac("sha256", process.env.eQfYymYgJWC7ZkytvuAdaku2)
       .update(body)
       .digest("hex");
 
