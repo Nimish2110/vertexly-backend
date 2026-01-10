@@ -21,6 +21,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.0",
     "multer": "^2.0.2",
+    "razorpay": "^2.9.4",
 
     "@types/node": "^24.10.3",
     "@types/express": "^5.0.6",
