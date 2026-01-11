@@ -35,7 +35,7 @@ app.use("/api/admin/templates", adminTemplateRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin", adminDeliveryRoutes);
 app.use("/uploads", express.static("uploads"));
-app.use("/api/payments", paymentRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Vertexly Backend is running 🚀" });
