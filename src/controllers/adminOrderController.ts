@@ -67,6 +67,39 @@ export const startOrder = async (req: Request, res: Response) => {
   }
 };
 
+// ADMIN: Accept order requirements & unlock payment
+export const acceptOrder = async (req: Request, res: Response) => {
+  try {
+    const { orderId } = req.params;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status !== "requirements_submitted") {
+      return res.status(400).json({
+        message: "Order cannot be accepted in current state"
+      });
+    }
+
+    order.status = "accepted";
+    order.paymentStatus = "pending"; // 🔑 unlock payment
+
+    await order.save();
+
+    return res.json({
+      message: "Order accepted. Payment unlocked.",
+      order
+    });
+
+  } catch (error) {
+    console.error("Accept Order Error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 // ADMIN: Mark order as COMPLETED
 export const completeOrder = async (req: Request, res: Response) => {
   try {
