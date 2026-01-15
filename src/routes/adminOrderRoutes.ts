@@ -1,19 +1,32 @@
 import { Router } from "express";
 import Order from "../models/order.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
-import { updateOrderStatus } from "../controllers/adminOrderController.js";
-import { startOrder } from "../controllers/adminOrderController.js";
-import { completeOrder } from "../controllers/adminOrderController.js";
-import { cancelOrder } from "../controllers/adminOrderController.js";
-import { rejectOrder } from "../controllers/adminOrderController.js";
 
+import {
+  updateOrderStatus,
+  startOrder,
+  completeOrder,
+  cancelOrder,
+  rejectOrder,
+  acceptOrder
+} from "../controllers/adminOrderController.js";
 
 const router = Router();
 
-// GET /api/admin/orders - list all orders
+/**
+ * GET /api/admin/orders
+ * Optional query: ?status=
+ */
 router.get("/orders", protect, adminOnly, async (req, res) => {
   try {
-    const orders = await Order.find()
+    const { status } = req.query;
+
+    const filter: any = {};
+    if (status) {
+      filter.status = status;
+    }
+
+    const orders = await Order.find(filter)
       .populate("user", "name email")
       .populate("template", "name price");
 
@@ -23,53 +36,65 @@ router.get("/orders", protect, adminOnly, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-router.patch("/:orderId/status", protect, adminOnly, updateOrderStatus);
 
+/**
+ * ADMIN: Accept order (unlock payment)
+ */
+router.patch(
+  "/orders/:orderId/accept",
+  protect,
+  adminOnly,
+  acceptOrder
+);
 
-// PATCH /api/admin/orders/:orderId/accept
-router.patch("/orders/:orderId/accept", protect, adminOnly, async (req, res) => {
-  try {
-    const { orderId } = req.params;
+/**
+ * ADMIN: Generic status update (use carefully)
+ */
+router.patch(
+  "/orders/:orderId/status",
+  protect,
+  adminOnly,
+  updateOrderStatus
+);
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+/**
+ * ADMIN: Start work
+ */
+router.patch(
+  "/orders/:orderId/start",
+  protect,
+  adminOnly,
+  startOrder
+);
 
-    order.status = "accepted";
-    await order.save();
+/**
+ * ADMIN: Mark completed
+ */
+router.patch(
+  "/orders/:orderId/complete",
+  protect,
+  adminOnly,
+  completeOrder
+);
 
-    res.json({ message: "Order accepted", order });
-  } catch (error) {
-    console.error("Admin Accept Order Error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+/**
+ * ADMIN: Cancel order
+ */
+router.patch(
+  "/orders/:orderId/cancel",
+  protect,
+  adminOnly,
+  cancelOrder
+);
 
-// PATCH /api/admin/orders/:orderId/reject
-router.patch("/orders/:orderId/reject", protect, adminOnly, async (req, res) => {
-  try {
-    const { orderId } = req.params;
-
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    order.status = "rejected";
-    await order.save();
-
-    res.json({ message: "Order rejected", order });
-  } catch (error) {
-    console.error("Admin Reject Order Error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-router.patch("/:orderId/start", protect, adminOnly, startOrder);
-router.patch("/:orderId/complete", protect, adminOnly, completeOrder);
-router.patch("/:orderId/cancel", protect, adminOnly, cancelOrder);
-// Reject order with reason
-router.patch("/:orderId/reject", protect, adminOnly, rejectOrder);
+/**
+ * ADMIN: Reject order with reason
+ */
+router.patch(
+  "/orders/:orderId/reject",
+  protect,
+  adminOnly,
+  rejectOrder
+);
 
 export default router;
