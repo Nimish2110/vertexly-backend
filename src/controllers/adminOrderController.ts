@@ -84,7 +84,7 @@ export const acceptOrder = async (req: Request, res: Response) => {
     }
 
     order.status = "accepted";
-    order.paymentStatus = "pending"; // 🔑 unlock payment
+    order.paymentStatus = "unpaid"; // ✅ FIXED
 
     await order.save();
 
@@ -92,12 +92,12 @@ export const acceptOrder = async (req: Request, res: Response) => {
       message: "Order accepted. Payment unlocked.",
       order
     });
-
   } catch (error) {
     console.error("Accept Order Error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 // ADMIN: Mark order as COMPLETED
