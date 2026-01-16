@@ -30,7 +30,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/templates", templateRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/orders", requirementsRoutes);
-app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin", adminOrderRoutes);
 app.use("/api/admin/templates", adminTemplateRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin", adminDeliveryRoutes);
