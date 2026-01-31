@@ -13,21 +13,30 @@ const UserSchema = new Schema<IUser>(
   {
     name: { type: String, required: true },
 
-    // Email is optional now (because phone login exists)
-    email: { type: String, unique: true, sparse: true },
+    email: {
+      type: String,
+      unique: true,
+      sparse: true, // ✅ allows null values
+    },
 
-    // Phone is optional but unique
-    phone: { type: String, unique: true, sparse: true },
+    phone: {
+      type: String,
+      unique: true,
+      sparse: true, // ✅ allows null values
+    },
 
     password: { type: String, required: true, select: false },
 
     role: {
       type: String,
       enum: ["user", "admin"],
-      default: "user"
+      default: "user",
     },
 
-    isDeleted: { type: Boolean, default: false }
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
