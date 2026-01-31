@@ -3,21 +3,27 @@ import User, { IUser } from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-/* ===========================
-   LOGIN USER (Email OR Phone)
-=========================== */
+/**
+ * LOGIN (Email OR Phone)
+ */
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { emailOrPhone, password } = req.body;
+    const { identifier, password } = req.body;
+    // identifier = email OR phone
 
-    if (!emailOrPhone || !password) {
+    if (!identifier || !password) {
       return res.status(400).json({ message: "Missing credentials" });
     }
 
-    // Find user by email OR phone
-    const user = await User.findOne({
-      $or: [{ email: emailOrPhone }, { phone: emailOrPhone }]
-    }).select("+password") as IUser;
+    const orConditions: Array<{ email?: string; phone?: string }> = [];
+
+    if (identifier.includes("@")) {
+      orConditions.push({ email: identifier });
+    } else {
+      orConditions.push({ phone: identifier });
+    }
+
+    const user = await User.findOne({ $or: orConditions }).select("+password") as IUser | null;
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -40,53 +46,46 @@ export const loginUser = async (req: Request, res: Response) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email || null,
-        phone: user.phone || null,
-        role: user.role
-      }
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+      },
     });
-
   } catch (error: any) {
-    console.error("Login Error:", error?.message, error);
+    console.error("Login Error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
 
-/* ===========================
-   REGISTER USER (Email OR Phone)
-=========================== */
+/**
+ * REGISTER (Email OR Phone)
+ */
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { name, email, phone, password } = req.body;
 
     if (!name || !password || (!email && !phone)) {
-      return res.status(400).json({
-        message: "Name, password and email or phone are required"
-      });
+      return res.status(400).json({ message: "Invalid registration data" });
     }
 
-    // Check existing user
-    const existingUser = await User.findOne({
-      $or: [
-        email ? { email } : null,
-        phone ? { phone } : null
-      ].filter(Boolean)
-    });
+    const orConditions: Array<{ email?: string; phone?: string }> = [];
 
+    if (email) orConditions.push({ email });
+    if (phone) orConditions.push({ phone });
+
+    const existingUser = await User.findOne({ $or: orConditions });
     if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists with this email or phone"
-      });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       name,
-      email: email || undefined,
-      phone: phone || undefined,
+      email,
+      phone,
       password: hashedPassword,
-      role: "user"
+      role: "user",
     });
 
     const token = jwt.sign(
@@ -101,14 +100,13 @@ export const registerUser = async (req: Request, res: Response) => {
       user: {
         id: newUser._id,
         name: newUser.name,
-        email: newUser.email || null,
-        phone: newUser.phone || null,
-        role: newUser.role
-      }
+        email: newUser.email,
+        phone: newUser.phone,
+        role: newUser.role,
+      },
     });
-
   } catch (error: any) {
-    console.error("Register Error:", error?.message, error);
+    console.error("Register Error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
