@@ -8,22 +8,21 @@ import jwt from "jsonwebtoken";
  */
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { identifier, password } = req.body;
-    // identifier = email OR phone
+    const identifier =
+      req.body.identifier || req.body.email || req.body.phone;
+
+    const { password } = req.body;
 
     if (!identifier || !password) {
       return res.status(400).json({ message: "Missing credentials" });
     }
 
-    const orConditions: Array<{ email?: string; phone?: string }> = [];
+    const query =
+      typeof identifier === "string" && identifier.includes("@")
+        ? { email: identifier }
+        : { phone: identifier };
 
-    if (identifier.includes("@")) {
-      orConditions.push({ email: identifier });
-    } else {
-      orConditions.push({ phone: identifier });
-    }
-
-    const user = await User.findOne({ $or: orConditions }).select("+password") as IUser | null;
+    const user = await User.findOne(query).select("+password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -48,14 +47,15 @@ export const loginUser = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
-      },
+        role: user.role
+      }
     });
   } catch (error: any) {
     console.error("Login Error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 /**
  * REGISTER (Email OR Phone)
