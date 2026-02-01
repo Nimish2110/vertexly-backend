@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import User, { IUser } from "../models/user.js";
+import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -8,23 +8,29 @@ import jwt from "jsonwebtoken";
  */
 export const loginUser = async (req: Request, res: Response) => {
   try {
+    // 🔥 Accept ALL possible frontend keys
     const identifier =
-      req.body.identifier || req.body.email || req.body.phone;
+      req.body.identifier ||
+      req.body.email ||
+      req.body.phone ||
+      req.body.emailOrPhone ||
+      req.body.username ||
+      req.body.value;
 
-    const { password } = req.body;
+    const password: string | undefined = req.body.password;
 
     if (!identifier || !password) {
       return res.status(400).json({ message: "Missing credentials" });
     }
 
-    const query =
-      typeof identifier === "string" && identifier.includes("@")
-        ? { email: identifier }
-        : { phone: identifier };
+    const isEmail =
+      typeof identifier === "string" && identifier.includes("@");
 
-    const user = await User.findOne(query).select("+password");
+    const user = await User.findOne(
+      isEmail ? { email: identifier } : { phone: identifier }
+    ).select("+password");
 
-    if (!user) {
+    if (!user || !user.password) {
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -35,7 +41,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
     );
 
@@ -45,17 +51,16 @@ export const loginUser = async (req: Request, res: Response) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role
-      }
+        email: user.email || null,
+        phone: user.phone || null,
+        role: user.role,
+      },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Login Error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 /**
  * REGISTER (Email OR Phone)
@@ -69,7 +74,6 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 
     const orConditions: Array<{ email?: string; phone?: string }> = [];
-
     if (email) orConditions.push({ email });
     if (phone) orConditions.push({ phone });
 
@@ -82,15 +86,15 @@ export const registerUser = async (req: Request, res: Response) => {
 
     const newUser = await User.create({
       name,
-      email,
-      phone,
+      email: email || null,
+      phone: phone || null,
       password: hashedPassword,
       role: "user",
     });
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET!,
+      process.env.JWT_SECRET as string,
       { expiresIn: "7d" }
     );
 
@@ -100,12 +104,12 @@ export const registerUser = async (req: Request, res: Response) => {
       user: {
         id: newUser._id,
         name: newUser.name,
-        email: newUser.email,
-        phone: newUser.phone,
+        email: newUser.email || null,
+        phone: newUser.phone || null,
         role: newUser.role,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Register Error:", error);
     return res.status(500).json({ message: "Server error" });
   }
